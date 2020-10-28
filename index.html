@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+          integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <link rel="stylesheet" href="./css/index.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+            integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+            crossorigin="anonymous"></script>
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"
+            integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.0.0/firebase-database.js"></script>
+
+    <script>
+        //firebase
+        var firebaseConfig = {
+            apiKey: "AIzaSyCbx4pEetaNT9hPH072eEEhl6kTA-oPcCE",
+            authDomain: "restaurant-b07d5.firebaseapp.com",
+            databaseURL: "https://restaurant-b07d5.firebaseio.com",
+            projectId: "restaurant-b07d5",
+            storageBucket: "restaurant-b07d5.appspot.com",
+            messagingSenderId: "626535033218",
+            appId: "1:626535033218:web:adfd78204d11c0266ec79b",
+            measurementId: "G-Q0CGDN6HE1"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+</head>
+<body>
+
+
+<div class="container-fluid h-100">
+    <div class="input-group">
+        <input type="text" class="form-control col-md-2" placeholder="Nombre" value="Cliente" id="autor">
+        <button type="button" id="saveAutor" class="btn btn-circle btn-primary"> guardar</button>
+    </div>
+    <div class="row justify-content-center h-100">
+        <!--        chat-->
+        <div class="col-md-8 col-xl-6 chat" id="contenido" style="display:none;">
+            <div class="card">
+                <!--                header-->
+                <div class="card-header msg_head">
+                    <div class="d-flex bd-highlight">
+                        <div class="img_cont">
+                            <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg"
+                                 class="rounded-circle user_img">
+                            <span class="online_icon"></span>
+                        </div>
+                        <div class="user_info">
+                            <span>Chat</span>
+                        </div>
+                    </div>
+                </div>
+                <!--                mensajes de chat -->
+                <div class="card-body msg_card_body" id="chat">
+
+                </div>
+
+                <div class="card-footer">
+                    <div class="input-group">
+                        <textarea id="message" class="form-control type_msg"
+                                  placeholder="Escribe tu mensaje..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+
+<script>
+
+    var dbRef = firebase.database().ref();
+    var chatRef = null;
+    console.log('chat -> ' + chatRef)
+    var mensaje = $("#message");
+    var autor = $("#autor");
+
+    $("#saveAutor").on("click", function () {
+        if (autor.val().trim() !== '') {
+            let nomAutor = autor.val().trim() + new Date().getTime();
+            ocultar(nomAutor);
+        } else {
+            alert("Escribe un nombre para poder continuar");
+        }
+
+    });
+
+    function ocultar(nomAutor) {
+        localStorage.setItem("nombreAutor", nomAutor);
+        autor.val(nomAutor).hide();
+        $("#saveAutor").hide();
+        $("#contenido").show();
+        $("#message").attr("placeholder", nomAutor + ', Escribe tu mensaje...');
+        initChat();
+    }
+
+
+    /*    $('#enviar').on('click', function () {
+            var mensaje = $('#message').val();
+            console.log('fecha ->> ', new Date());
+            chatRef.push({
+                userEnvio: "Miguel",
+                attr: "chat1",
+                mensaje: mensaje,
+                fecha: new Date().toString(),
+                comentario: "Envio este comentario"
+            });
+            $('#message').val('');
+        });*/
+
+    mensaje.on("keypress", function (event) {
+        var codigo = event.which || event.keyCode;
+        let nomAutor = autor.val();
+        console.log("Presionada: " + codigo);
+        if (codigo === 13) {
+            console.log("Tecla ENTER");
+            var message = mensaje.val();
+            console.log('message ->> ', message);
+            if (message.trim() !== '') {
+                var f = new Date();
+                let fecha = f.getDate() + "/" + (f.getMonth() + 1) + "/" + f.getFullYear()
+                console.log('fecha -> ', fecha)
+                chatRef.push({
+                    mensaje: message,
+                    userEnvio: nomAutor,
+                    fecha: fecha
+                });
+            }
+            mensaje.val('');
+        }
+    });
+
+    $(document).ready(function () {
+        let nomAutor = localStorage.getItem("nombreAutor");
+        console.log("ready autor -> ", nomAutor);
+        if (nomAutor !== 'undefined' && nomAutor !== null) {
+            ocultar(nomAutor);
+        }
+
+    });
+
+    function template(mensaje, userEnvio) {
+        console.log('mensaje --> ', mensaje, ' userEnvio ', userEnvio);
+        var tem = "";
+        let nomAutor = autor.val();
+        if (userEnvio === nomAutor) {
+            temp = '<div class="d-flex justify-content-end mb-4">' +
+                '       <div class="msg_cotainer_send">' + mensaje +
+                '           <span class="msg_time">' + userEnvio + '</span>' +
+                '        </div>' +
+                '        <div class="img_cont_msg">' +
+                '           <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">' +
+                '        </div>' +
+                '    </div>'
+        } else {
+            temp = ' <div class="d-flex justify-content-start mb-4">' +
+                '         <div class="img_cont_msg">' +
+                '             <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img_msg">' +
+                '         </div>' +
+                '       <div class="msg_cotainer">' + mensaje +
+                '           <span class="msg_time">' + userEnvio + '</span>'
+            '       </div>' +
+            '    </div> ';
+        }
+        return temp;
+    }
+
+    /*
+        function templateConver(data) {
+            console.log('templateConver data -> ', data);
+            return '<li class="active">' +
+                '            <div class="d-flex bd-highlight" onclick="initChat(' + data.idChat + ')">' +
+                '                <div class="img_cont">' +
+                '                    <img src="https://static.turbosquid.com/Preview/001292/481/WV/_D.jpg" class="rounded-circle user_img">' +
+                '                        <span class="online_icon"></span>' +
+                '                </div>' +
+                '                <div class="user_info">' +
+                '                    <span>' + data.cliente + '</span>' +
+                '                </div>' +
+                '            </div>' +
+                '        </li>';
+        }
+    */
+
+    function initChat() {
+        chatRef = dbRef.child('chat/global');
+        chatRef.on('child_added', function (data) {
+            console.log('data -> ', data.val());
+            $('#chat').append(template(data.val().mensaje, data.val().userEnvio));
+        });
+    }
+</script>
+</html>
